@@ -20,8 +20,8 @@
    ```bash
    git clone https://github.com/molilya/Mobile-Users-database-on-flet.git
    cd Mobile-Users-database-on-flet
-Установите необходимые библиотеки:
-pip install flet
-
-Запустите приложение:
-python main.py
+   ```
+2. Установите необходимые библиотеки:
+   pip install flet
+3. Запустите приложение:
+   python main.py

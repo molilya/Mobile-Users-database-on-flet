@@ -248,6 +248,15 @@ def insert_test_data():
         role TEXT NOT NULL CHECK(role IN ('оператор', 'админ'))
     )''')
     # -------------------------------cr_userauth----------------------------------
+    cur.execute('''
+        INSERT OR IGNORE INTO UserAuth(
+            username,
+            password,
+            role
+        ) VALUES 
+        ('admin', 'admin', 'админ'),
+        ('operator', 'operator', 'оператор')
+    ''')
 
     conn.commit()
     conn.close()

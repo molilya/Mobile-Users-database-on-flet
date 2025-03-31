@@ -2,31 +2,32 @@ import flet as ft
 from flet import ThemeMode, Icons, BorderSide, ButtonStyle, RoundedRectangleBorder
 import db
 
-# класс для хранения данных сессии
+#класс для хранения данных сессии
 class Session:
     def __init__(self):
         self.username = ""
         self.role = ""
         self.is_authenticated = False
+        self.theme_mode = ThemeMode.LIGHT  #добавляем тему в сессию
 
 #создаем глобальный объект сессии
 session = Session()
 
-# Функция для показа SnackBar с сообщением об ошибке
+#функция для показа SnackBar с сообщением об ошибке
 def show_error_snackbar(page, message):
     page.open(ft.SnackBar(
         content=ft.Text(message, weight=ft.FontWeight.W_500),
-        bgcolor="#F44336",  # Красный цвет для ошибок
+        bgcolor="#F44336",  #красный цвет для ошибок
         action="Закрыть",
         action_color="white",
     ))
     page.update()
 
-# Функция для показа SnackBar с сообщением об успехе
+#функция для показа SnackBar с сообщением об успехе
 def show_success_snackbar(page, message):
     page.open(ft.SnackBar(
         content=ft.Text(message, weight=ft.FontWeight.W_500),
-        bgcolor="#4CAF50",  # Зеленый цвет для успешных операций
+        bgcolor="#4CAF50",  #зеленый цвет для успешных операций
         action="Закрыть",
         action_color="white",
     ))
@@ -64,9 +65,18 @@ def go_to_register(e):
     register_page(page)
     page.update()
 
+def toggle_theme(e):
+    page = e.page
+    if session.theme_mode == ThemeMode.LIGHT:
+        session.theme_mode = ThemeMode.DARK
+    else:
+        session.theme_mode = ThemeMode.LIGHT
+    page.theme_mode = session.theme_mode
+    page.update()
+
 def login_page(page: ft.Page):
     page.title = "Авторизация"
-    page.theme_mode = ThemeMode.DARK
+    page.theme_mode = session.theme_mode  #используем тему из сессии
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.window.width = 1500
@@ -200,15 +210,29 @@ def login_page(page: ft.Page):
     
     page.add(
         ft.Container(
-            content=ft.FilledTonalButton(
-                text="Выход", 
-                width=300, 
-                on_click=exit_app,
-                icon=Icons.EXIT_TO_APP,
-                style=ButtonStyle(
-                    shape=RoundedRectangleBorder(radius=8),
+            content=ft.Column([
+                ft.Row(
+                    [ft.FilledTonalButton(
+                        text="Выход", 
+                        width=300, 
+                        on_click=exit_app,
+                        icon=Icons.EXIT_TO_APP,
+                        style=ButtonStyle(
+                            shape=RoundedRectangleBorder(radius=8),
+                        ),
+                    )],
+                    alignment=ft.MainAxisAlignment.CENTER,
                 ),
-            ),
+                ft.Row(
+                    [ft.IconButton(
+                        icon=Icons.DARK_MODE if page.theme_mode == ThemeMode.LIGHT else Icons.LIGHT_MODE,
+                        tooltip="Переключить тему",
+                        on_click=toggle_theme,
+                        icon_color=ft.colors.BLUE,
+                    )],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+            ], spacing=0),
             alignment=ft.alignment.bottom_center,
             margin=20,
         )
@@ -216,7 +240,7 @@ def login_page(page: ft.Page):
     
 def register_page(page: ft.Page):
     page.title = "Регистрация"
-    page.theme_mode = ThemeMode.DARK
+    page.theme_mode = session.theme_mode  # используем тему из сессии
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.window.width = 1500
@@ -354,7 +378,7 @@ def register_page(page: ft.Page):
 
 def hello_user_page(page: ft.Page):
     page.title = "Управление данными"
-    page.theme_mode = ThemeMode.DARK
+    page.theme_mode = session.theme_mode  # используем тему из сессии
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.window.width = 1500
@@ -503,7 +527,7 @@ def delete_record(table_name, record_id):
     conn, cur = db.connect_db()
     
     try:
-        # Получение информации о первичном ключе таблицы
+        #получение информации о первичном ключе таблицы
         table_info = db.get_table_info(table_name)
         primary_key = table_info['primary_key']
         
@@ -511,11 +535,11 @@ def delete_record(table_name, record_id):
             print(f"Не удалось найти первичный ключ для таблицы {table_name}")
             return False
         
-        # Выполнение запроса на удаление
+        #выполнение запроса на удаление
         cur.execute(f"DELETE FROM {table_name} WHERE {primary_key} = ?", (record_id,))
         conn.commit()
         
-        # Проверка, была ли удалена запись
+        #вроверка, была ли удалена запись
         if cur.rowcount > 0:
             return True
         else:
@@ -565,7 +589,7 @@ def update_user(user_id, username, password=None, role=None):
         params = []
         
         if username:
-            # Проверка на уникальность имени пользователя
+            #проверка на уникальность имени пользователя
             for row in user_info['data']:
                 if row[1] == username and row[0] != user_id:
                     raise ValueError(f"Пользователь с логином '{username}' уже существует")
@@ -596,7 +620,7 @@ def update_user(user_id, username, password=None, role=None):
     except Exception as e:
         print(f"Ошибка при обновлении пользователя: {e}")
         conn.rollback()
-        raise  # Пробрасываем исключение дальше для обработки в UI
+        raise  #пробрасываем исключение дальше для обработки в UI
     finally:
         conn.close()
 
@@ -680,9 +704,9 @@ def admin_panel_view(page):
             users_table.rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(str(user[0]))),  # ID
-                        ft.DataCell(ft.Text(user[1])),       # Логин (username)
-                        ft.DataCell(ft.Text(user[3])),       # Роль (индекс 3)
+                        ft.DataCell(ft.Text(str(user[0]))),  #ID
+                        ft.DataCell(ft.Text(user[1])),       #Логин (username)
+                        ft.DataCell(ft.Text(user[3])),       #Роль (индекс 3)
                         ft.DataCell(actions),
                     ]
                 )
@@ -1085,7 +1109,7 @@ def operator_panel_view(page):
         data_row_min_height=50,
     )
     
-    # Оборачиваем таблицу в Column с прокруткой
+    #оборачиваем таблицу в Column с прокруткой
     data_container = ft.Column(
         [data_table],
         height=400,
@@ -1697,7 +1721,7 @@ def admin_tables_view(page):
         data_row_min_height=50,
     )
     
-    # Оборачиваем таблицу в Column с прокруткой вместо Container
+    #оборачиваем таблицу в Column с прокруткой вместо Container
     data_container = ft.Column(
         [data_table],
         height=400,
@@ -1770,7 +1794,7 @@ def admin_tables_view(page):
             on_change=handle_rail_change,
             bgcolor="fafafaf",
         ),
-        height=800,  # Фиксированная высота
+        height=800,  #фиксированная высота
     )
     
     #кнопка для возврата на главный экран
@@ -1825,6 +1849,5 @@ def admin_tables_view(page):
         surface_tint_color="#E0E0E0",
         margin=20,
     )
-
 
 ft.app(target=login_page)
